@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HTML を PDF にする API</title>
+  </head>
+  <body>
+    <h1>HTML を PDF にする API</h1>
+    <p>
+      <code><script>document.write(location.origin)</script></code> に
+      <code>text/html</code> を <code>POST</code>
+      すると <code>application/pdf</code> を返します。
+    </p>
+    <p>
+      つまりこうだ。
+      <code>
+        curl -H 'content-type: text/html' --data-raw '&lt;h1>hello&lt;/h1>'
+        <script>document.write(location.origin)</script>
+        -o hello.pdf
+      </code>
+    </p>
+    <section>
+      <h2>デモ</h2>
+      <form action=/ method=post>
+        <textarea name=html rows=40 cols=100>&lt;h1>はい！&lt/h1></textarea>
+        <p><button>押す</button></p>
+        <p id=progress hidden><progress>now loading...</progress></p>
+      </form>
+      </section>
+    <script>
+      const form = document.querySelector('form');
+      (async () => {
+        form.elements.html.value = await (await fetch('/example.html')).text()
+      })();
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const progress = document.querySelector('#progress');
+        progress.hidden = false;
+        form.hidden = true;
+        try {
+          const response = await fetch('/', {
+            method: 'POST',
+            headers: { 'content-type': 'text/html; charset=UTF-8' },
+            body: form.elements.html.value,
+          });
+          if (response.status !== 200) {
+            console.error(response.status, await response.text());
+          }
+          const blob = await response.blob()
+          location.href = URL.createObjectURL(blob);
+        } finally {
+          progress.hidden = true;
+          form.hidden = false;
+        }
+      });
+    </script>
+  </body>
+</html>
